@@ -3,6 +3,7 @@ import { useQuery } from '@apollo/client';
 import { QUERY_CATEGORIES } from '../../utils/queries';
 import { UPDATE_CATEGORIES, UPDATE_CURRENT_CATEGORY } from '../../utils/actions';
 import { useStoreContext } from '../../utils/GlobalState';
+import { idbPromise } from '../../utils/helpers';
 
 function CategoryMenu() {
 
@@ -14,7 +15,7 @@ function CategoryMenu() {
   // we only need categories so we destructure it out of state
   const { categories } = state;
 
-  const { data: categoryData } = useQuery(QUERY_CATEGORIES);
+  const { loading, data: categoryData } = useQuery(QUERY_CATEGORIES);
 
   // we need to get the data back from the query and set it as global state, 
     // useEffect is nice because it not only runs on component load, but also when the state changes in the component.
@@ -25,9 +26,20 @@ function CategoryMenu() {
       dispatch({
         type: UPDATE_CATEGORIES,
         categories: categoryData.categories
+      }); 
+      // save each category to idb
+      categoryData.categories.forEach(category => {
+        idbPromise('categories', 'put', category)
+      })
+    } else if (!loading) {
+      idbPromise('categories', 'get').then(categories => {
+        dispatch({
+          type: UPDATE_CATEGORIES,
+          categories: categories
+        });
       });
     }
-  }, [categoryData, dispatch]);
+  }, [categoryData, loading, dispatch]);
 
   const handleClick = id => {
     dispatch({

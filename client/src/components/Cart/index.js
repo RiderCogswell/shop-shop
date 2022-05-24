@@ -1,12 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { TOGGLE_CART, ADD_MULTIPLE_TO_CART } from '../../utils/actions';
+import { idbPromise } from '../../utils/helpers';
 import CartItem from '../CartItem';
 import Auth from '../../utils/auth';
 import './style.css';
 import { useStoreContext } from '../../utils/GlobalState';
-import { TOGGLE_CART } from '../../utils/actions';
 
 const Cart = () => {
   const [state, dispatch] = useStoreContext();
+
+  useEffect(() => {
+    async function getCart() {
+      // get items from cart amd put them in global store
+      const cart = await idbPromise('cart', 'get');
+      dispatch({ type: ADD_MULTIPLE_TO_CART, products: [...cart] });
+    };
+
+    if (!state.cart.length) {
+      getCart();
+    }
+    // the dependency array lists everything the Hook is dependent on to execute
+    // The Hook runs on load no matter what, but it will only run again if any value in the dependency array is changed 
+  }, [state.cart.length, dispatch]);
 
   const toggleCart = () => {
     dispatch({ type: TOGGLE_CART });
@@ -30,7 +45,7 @@ const Cart = () => {
       </div>
     );
   };
-  console.log(state);
+
 
   return (
     <div className='cart'>

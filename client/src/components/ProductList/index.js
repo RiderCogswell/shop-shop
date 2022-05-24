@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { idbPromise } from '../../utils/helpers';
 import { useQuery } from '@apollo/client';
 import { useStoreContext } from '../../utils/GlobalState';
 import { UPDATE_PRODUCTS } from '../../utils/actions';
@@ -13,13 +14,31 @@ function ProductList() {
   const { loading, data } = useQuery(QUERY_PRODUCTS);
 
   useEffect(() => {
+    // if theres data to be stored
     if (data) {
+      // store it in the global state obj
       dispatch({
         type: UPDATE_PRODUCTS,
         products: data.products
       });
+
+      // also take each product and save to idb usinf the helper function
+      data.products.forEach((product) => {
+        idbPromise('products', 'put', product);
+      })
+      // check if loading is undefined 
+    } else if (!loading) {
+      // since were offline, get all the data from the 'products' global store
+      idbPromise('products', 'get').then((products) => {
+        // use retrieved data to set global state for offline browsing
+        dispatch({
+          type: UPDATE_PRODUCTS,
+          // pull from products in idbPromise not data.products
+          products: products
+        });
+      });
     }
-  }, [data, dispatch])
+  }, [data, loading, dispatch]);
 
   function filterProducts() {
     if (!currentCategory) {

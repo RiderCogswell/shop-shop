@@ -22,7 +22,7 @@ const StoreProvider = ({ value = [], ...props }) => {
     currentCategory: '',
   });
   // confirm it works
-  console.log(state);
+  // console.log(state);
   // once given our state and dispatch we return the StoreContext's Provider component with our
   // state obj and dispatch provided as data for the value prop
   // the '...props' is there to handle any other props the user may need 

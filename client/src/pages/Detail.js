@@ -10,6 +10,7 @@ import {
   UPDATE_CART_QUANTITY,
   ADD_TO_CART,
   REMOVE_FROM_CART } from '../utils/actions';
+  import { idbPromise } from '../utils/helpers';
 
 function Detail() {
   const [state, dispatch] = useStoreContext();
@@ -31,11 +32,18 @@ function Detail() {
         _id: id,
         purchaseQuantity: parseInt(itemInCart.purchaseQuantity) + 1
       });
+      // if were updating quantity, use existing item data and increment purchaseQuant by 1
+      idbPromise('cart', 'put', {
+        ...itemInCart,
+        purchaseQuantity: parseInt(itemInCart.purchaseQuantity) + 1
+      })
     } else {
       dispatch({
         type: ADD_TO_CART,
         product: { ...currentProduct, purchaseQuantity: 1 }
       });
+      // if product isnt in the cart yet, add it to the current shopping cart in idb
+      idbPromise('cart', 'put', { ...currentProduct, purchaseQuantity: 1 })
     }
 
   };
@@ -44,7 +52,10 @@ function Detail() {
     dispatch({
       type: REMOVE_FROM_CART,
       _id: currentProduct._id
-    })
+    });
+
+    // upon removal from cart, delete the item from indexedDB using the 'currentProduct._id' to locate what to remove
+    idbPromise('cart', 'delete', { ...currentProduct });
   }
 
   useEffect(() => {
@@ -57,10 +68,26 @@ function Detail() {
         type: UPDATE_PRODUCTS,
         products: data.products
       });
+
+      data.products.forEach((product) => {
+        idbPromise('products', 'put', product);
+      });
     }
+
+    // get cache form idb
+    else if (!loading) {
+      // here we call them indexedProducts because we alread ahve a products variable on the page
+      idbPromise('products', 'get').then((indexedProducts) => {
+        dispatch({
+          type: UPDATE_PRODUCTS,
+          products: indexedProducts
+        })
+      })
+    }
+
     // there is so many args because the hooks functionality are dependent on them to work!
     // this is the Dependency Array!!!!!
-  }, [products, data, dispatch, id]);
+  }, [products, data, loading, dispatch, id]);
 
   return (
     <>
