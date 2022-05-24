@@ -16,6 +16,8 @@ const StoreProvider = ({ value = [], ...props }) => {
   // and a dispatch, which is the method used to update our state, specifically wit will look for an action obj passed in as an arg
   const [state, dispatch] = useProductReducer({
     products: [],
+    cart: [],
+    cartOpen: false,
     categories: [],
     currentCategory: '',
   });
